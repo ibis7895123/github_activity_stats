@@ -18,8 +18,8 @@ GitHub の統計情報を取得する Goole App Scripts 群
 - ヘッダーは以下を想定
 
 | A | B | C | D |
-| -- | -- | -- | -- |
-| mergedAt | repoName | id | title |
+| -- | -- | -- | -- | -- |
+| 1 | mergedAt | repoName | id | title |
 
 - グラフが1つだけある
 

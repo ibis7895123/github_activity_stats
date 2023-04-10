@@ -14,7 +14,14 @@ GitHub の統計情報を取得する Goole App Scripts 群
 ## 前提とするスプレッドシートの形式について
 - `pullsRawData`という名前のシートがあること
   - ここに merged pull request の情報が書き込まれる
-- 1行目は
+- 1行目はヘッダー想定で、書き込みは2行目から
+- ヘッダーは以下を想定
+
+| A | B | C | D |
+| -- | -- | -- | -- |
+| mergedAt | repoName | id | title |
+
+- グラフが1つだけある
 
 ## スクリプトプロパティに必要な秘匿情報
 - **githubIdTokenBase64**

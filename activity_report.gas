@@ -61,7 +61,7 @@ function getGithubPulls(repoName, page=1) {
     // 過去 100 件の閉じられた PR 取得
     // see: https://docs.github.com/ja/rest/pulls/pulls?apiVersion=2022-11-28#list-pull-requests
     let response = UrlFetchApp.fetch(
-      `https://api.github.com/repos/organizations/${repoName}/pulls?state=closed&base=main&per_page=${GITHUB_PULLS_PER_PAGE}&page=${page}`,
+      `https://api.github.com/repos/organization/${repoName}/pulls?state=closed&base=main&per_page=${GITHUB_PULLS_PER_PAGE}&page=${page}`,
       options
     )
     response = JSON.parse(response.getContentText())

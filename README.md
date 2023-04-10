@@ -17,7 +17,7 @@ GitHub の統計情報を取得する Goole App Scripts 群
 - 1行目はヘッダー想定で、書き込みは2行目から
 - ヘッダーは以下を想定
 
-| A | B | C | D |
+| \ | A | B | C | D |
 | -- | -- | -- | -- | -- |
 | 1 | mergedAt | repoName | id | title |
 

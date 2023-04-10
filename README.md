@@ -1,5 +1,5 @@
 # GitHub Activity Stats
-GitHub の統計情報を取得する Goole App Scripts 群
+GitHub の統計情報を取得する Goole Apps Script 群
 
 ## 取得できる情報
 - マージされた Pull Request

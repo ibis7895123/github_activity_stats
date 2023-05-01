@@ -1,12 +1,12 @@
 # GitHub Activity Stats
-GitHub の統計情報を取得する Goole Apps Script 群
+GitHub の統計情報を取得する Google Apps Script 群
 
 ## 取得できる情報
 - マージされた Pull Request
   - 直近 100 件を取得
 
 ## 処理の流れ
-1. GitHub API で 指定したリポジトリの merged pull request を取得
+1. GitHub API or Gitlab API で指定したリポジトリの merged pull request を取得
 2. 取得した情報をスプレッドシートに書き込み
 3. (スプレッドシート側でデータをグラフ化)
 4. 指定したグラフを画像にして slack に post
@@ -31,4 +31,6 @@ GitHub の統計情報を取得する Goole Apps Script 群
   - see: https://api.slack.com/authentication/token-types#bot
 - **slackChannelId**
   - post 先の slack channel id
-
+- **gitlabPAT**
+  - Gitlab の Project Access Token
+  - Role: `Reporter`, Scopes: `read_api` で作成

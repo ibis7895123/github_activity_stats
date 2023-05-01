@@ -33,4 +33,6 @@ GitHub の統計情報を取得する Google Apps Script 群
   - post 先の slack channel id
 - **gitlabPAT**
   - Gitlab の Project Access Token
+    - 自分は 1 Project しか必要なかったので Project Access Token にした
+    - 複数 Project から取得したければ Group を作ってそこから取得できそう
   - Role: `Reporter`, Scopes: `read_api` で作成

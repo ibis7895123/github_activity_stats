@@ -1,5 +1,6 @@
 # GitHub Activity Stats
 GitHub の統計情報を取得する Google Apps Script 群
+(GitLab も対応しました)
 
 ## 取得できる情報
 - マージされた Pull Request

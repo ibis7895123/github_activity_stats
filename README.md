@@ -17,12 +17,16 @@ GitHub の統計情報を取得する Google Apps Script 群
   - ここに merged pull request の情報が書き込まれる
 - 1行目はヘッダー想定で、書き込みは2行目から
 - ヘッダーは以下を想定
+- reviewers はカンマ区切りのテキスト
+  - 作者はスプレッドシート側で split して利用している
 
-| \ | A | B | C | D |
-| -- | -- | -- | -- | -- |
-| 1 | mergedAt | repoName | id | title |
+| \ | A | B | C | D | E | F |
+| -- | -- | -- | -- | -- | -- | -- |
+| 1 | mergedAt | repoName | id | title | reviewers | author |
 
-- グラフが1つだけある
+- 2つのグラフがある
+  1. 週ごとの Pull Request 合計数
+  2. 週ごとの Reviewer, Author の合計数
 
 ## スクリプトプロパティに必要な秘匿情報
 - **githubIdTokenBase64**

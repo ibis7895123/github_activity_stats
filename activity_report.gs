@@ -22,7 +22,7 @@ function activity_report_main() {
 // スプレッドシートの内容を更新
 function updatePullsRawData(sheetName) {
   GITHUB_REPO_NAMES.map((repoName)=> {
-    const pulls = getGithubPulls(repoName).data
+    const pulls = getGithubPulls(repoName, 1, true).data
 
     // スプシに書き込み
     pulls.map((pull) => {
@@ -30,6 +30,8 @@ function updatePullsRawData(sheetName) {
       writeSpreadSheet('B', PULLS_ROW_NOW, pull.repoName, sheetName)
       writeSpreadSheet('C', PULLS_ROW_NOW, pull.id, sheetName)
       writeSpreadSheet('D', PULLS_ROW_NOW, pull.title, sheetName)
+      writeSpreadSheet('E', PULLS_ROW_NOW, pull.reviewerNames.join(","), sheetName) // reviewers はスプシ側で展開する
+      writeSpreadSheet('F', PULLS_ROW_NOW, pull.authorName, sheetName)
 
       // 書き込み行を移動
       PULLS_ROW_NOW += 1
@@ -39,12 +41,14 @@ function updatePullsRawData(sheetName) {
   GITLAB_PROJECTS.map((project)=> {
     const requests = getGitlabMergeRequests(project).data
 
-      // スプシに書き込み
+    // スプシに書き込み
     requests.map((request) => {
       writeSpreadSheet('A', PULLS_ROW_NOW, request.mergedAt, sheetName)
       writeSpreadSheet('B', PULLS_ROW_NOW, request.repoName, sheetName)
       writeSpreadSheet('C', PULLS_ROW_NOW, request.id, sheetName)
       writeSpreadSheet('D', PULLS_ROW_NOW, request.title, sheetName)
+      writeSpreadSheet('E', PULLS_ROW_NOW, request.reviewerNames.join(","), sheetName) // reviewers はスプシ側で展開する
+      writeSpreadSheet('F', PULLS_ROW_NOW, request.authorName, sheetName)
 
       // 書き込み行を移動
       PULLS_ROW_NOW += 1
@@ -57,20 +61,34 @@ function postPullsGraphImage() {
   // スプシから画像を取得
   const spreadsheet = SpreadsheetApp.openById(SPREADSHEET_ID)
   const sheet = spreadsheet.getSheetByName(STATS_SHEET_NAME)
-  const filename = "github_activity.png"
-  const graph = sheet.getCharts()[0] // 1つ目のグラフ
-    .getBlob().getAs('image/png').setName(filename)
+
+  // PR数の週ごと集計
+  const pullsFilename = "github_activity.png"
+  const pullsGraph = sheet.getCharts()[0] // 1つ目のグラフ
+    .getBlob().getAs('image/png').setName(pullsFilename)
 
   // 画像をslackにPOST
   postBlob2Slack(
     "Merged Pull Requests",
-    "マージされたPull Request: 週毎に集計。",
-    filename,
-    graph
+    "マージされた Pull Request: 週毎に集計。",
+    pullsFilename,
+    pullsGraph
+  )
+
+  const authorAndReviewerFilename = "author_and_reviewer_activity.png"
+  const authorAndReviewerGraph = sheet.getCharts()[2] // 3つ目のグラフ
+    .getBlob().getAs('image/png').setName(authorAndReviewerFilename)
+
+  // 画像をslackにPOST
+  postBlob2Slack(
+    "Pull Request's Author and Reviewer",
+    "過去12週の Pull Request の Author / Reviewer数",
+    authorAndReviewerFilename,
+    authorAndReviewerGraph
   )
 }
 
-function getGithubPulls(repoName, page=1) {
+function getGithubPulls(repoName, page=1, containReview=false) {
   const options = {
     'method': 'GET',
     'headers' : {
@@ -96,12 +114,37 @@ function getGithubPulls(repoName, page=1) {
   )
 
   // 必要な情報だけ抽出
-  const pulls = filteredResponse.map((pull) => ({
-    mergedAt: formattedDate(pull.merged_at),
-    repoName: repoName,
-    id: pull.number,
-    title: pull.title,
-  }))
+  const pulls = filteredResponse.map((pull) => {
+    const authorName = pull.user.login
+    let reviewerNames = []
+
+    // リクエストが多すぎてレートリミットに引っかかるので、取得するかどうかを分岐する
+    if (containReview) {
+      // レビュアーを取得
+      let response = UrlFetchApp.fetch(
+        `https://api.github.com/repos/giftee/${repoName}/pulls/${pull.number}/reviews`,
+        options
+      )
+      response = JSON.parse(response.getContentText())
+
+      // ユニークなレビュアーのリストを取得 (author は除く)
+      reviewerNames = [
+        ...new Set(
+          response.map((review) => review.user?.login)
+        )
+      ]
+      .filter((reviwerName) => reviwerName !== authorName)
+    }
+
+    return {
+      mergedAt: formattedDate(pull.merged_at),
+      repoName: repoName,
+      id: pull.number,
+      title: pull.title,
+      authorName: authorName,
+      reviewerNames: reviewerNames,
+    }
+  })
   // console.log(pulls[0])
 
   return {
@@ -130,17 +173,26 @@ function getGitlabMergeRequests(project, page=1) {
   // console.log(response[0])
 
   // 必要な情報だけ抽出
-  const requests = response.map((request) => ({
-    mergedAt: formattedDate(request.merged_at),
-    repoName: project.name,
-    id: request.iid,
-    title: request.title,
-  }))
+  const requests = response.map((request) => {
+    const authorName = request.author.username
+
+    return {
+      mergedAt: formattedDate(request.merged_at),
+      repoName: project.name,
+      id: request.iid,
+      title: request.title,
+      authorName: authorName,
+      // ユニークなレビュアーのリストを取得 (author は除く)
+      reviewerNames: request.reviewers
+        .map((reviewer) => reviewer.username)
+        .filter((reviwerName) => reviwerName !== authorName),
+    }
+  })
   // console.log(requests[0])
 
   return {
     data: requests,
     isEndPage: response.length != PER_PAGE,
-    lastMergedAt: requests.slice(-1)[0].mergedAt
+    lastMergedAt: requests.slice(-1)[0]?.mergedAt
   }
 }
